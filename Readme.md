@@ -230,3 +230,104 @@ Dockerfile → image → ECR       Dockerfile → builds zip → lambda.zip
 lambda.tf uses image_uri       lambda.tf uses filename
 needs ECR                      no ECR needed ✅
 
+
+
+STEPS FOR WITHOUT ECR ONE 
+
+Build zip using Docker:
+
+
+# Go to lambda folder
+cd E:\s3-sqs-lambda-docker-terraform\lambda
+
+# Build Docker image
+docker build -t image-resizer-builder .
+
+# Create a container without running it
+docker create --name temp-container image-resizer-builder
+
+# Copy node_modules from container to lambda folder
+docker cp temp-container:/var/task/node_modules E:\s3-sqs-lambda-docker-terraform\lambda\node_modules
+
+# Copy index.js too
+docker cp temp-container:/var/task/index.js E:\s3-sqs-lambda-docker-terraform\lambda\index.js
+
+# Remove the temp container
+docker rm temp-container
+
+
+Zip everything on Windows:
+
+cd E:\s3-sqs-lambda-docker-terraform\lambda
+
+# Delete old zip if exists
+Remove-Item ..\terraform\lambda.zip -ErrorAction SilentlyContinue
+
+# Zip index.js + node_modules together
+Compress-Archive -Path .\index.js, .\node_modules -DestinationPath ..\terraform\lambda.zip
+
+Verify zip:
+
+[System.IO.Compression.ZipFile]::OpenRead("E:\s3-sqs-lambda-docker-terraform\terraform\lambda.zip").Entries | Select-Object FullName | Select-Object -First 10
+
+
+Extract lambda.zip from container:
+
+# Create container without running it
+docker create --name temp-container image-resizer-builder
+
+# Copy zip from container to terraform folder
+docker cp temp-container:/lambda.zip E:\s3-sqs-lambda-docker-terraform\terraform\lambda.zip
+
+# Remove temp container
+docker rm temp-container
+
+
+Verify zip exists and has correct contents:
+
+# Check zip exists
+ls E:\s3-sqs-lambda-docker-terraform\terraform\lambda.zip
+
+
+# Load the assembly first
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+
+
+# Check first 10 entries inside zip
+[System.IO.Compression.ZipFile]::OpenRead("E:\s3-sqs-lambda-docker-terraform\terraform\lambda.zip").Entries | Select-Object FullName | Select-Object -First 10
+
+```
+
+Should show:
+```
+index.js
+node_modules/sharp/...
+node_modules/@aws-sdk/...
+
+
+ Terraform apply:
+
+cd E:\s3-sqs-lambda-docker-terraform\terraform
+terraform init
+terraform plan
+terraform apply -auto-approve
+
+
+
+Test upload:
+
+awslocal s3 cp E:\path\to\any-image.jpg s3://image-input-bucket/
+
+
+
+
+
+
+
+
+What this does:
+```
+docker build     → builds image with Linux Sharp binaries
+docker run       → starts container
+cp /lambda.zip   → copies zip from container
+/output          → into your terraform folder

@@ -13,7 +13,7 @@ const sharp = require("sharp");
 // Connect to LocalStack S3 (not real AWS)
 const s3 = new S3Client({
   region: "us-east-1",
-  endpoint: "http://host.docker.internal:4566",  // LocalStack URL from inside Docker
+  endpoint: process.env.S3_ENDPOINT || "http://host.docker.internal:4566",  // LocalStack URL from inside Docker
   forcePathStyle: true,                           // required for LocalStack
   credentials: {
     accessKeyId: "test",                          // LocalStack accepts any credentials
@@ -36,6 +36,12 @@ exports.handler = async (event) => {
 
     // Step 1: Parse SQS message body
     const body = JSON.parse(sqsRecord.body);
+
+    // Skip S3 test events (sent when notification is first created)
+    if (!body.Records) {
+      console.log("Skipping non-S3 event (test event)");
+      continue;
+    }
 
     for (const s3Record of body.Records) {
 

@@ -25,21 +25,20 @@
 
 
 
+# No ECR repository needed anymore
 
-
-# 1. ECR Repository (where Docker image is stored)
-resource "aws_ecr_repository" "image_resizer" {
-  name = "image-resizer"
-}
 
 # 2. Lambda Function (using Docker image instead of zip)
 resource "aws_lambda_function" "image_resizer" {
-  function_name = var.image_resizer_lambda
-  role          = aws_iam_role.lambda_role.arn
-  package_type  = "Image"                              # Docker image not zip
-  image_uri     = "${aws_ecr_repository.image_resizer.repository_url}:latest"
-  timeout       = var.lambda_timeout
-  memory_size   = var.lambda_memory                                  # more memory for image processing
+  function_name    = "image-resizer"
+  role             = aws_iam_role.lambda_role.arn
+  package_type     = "Zip"                  # back to zip ✅
+  filename         = "lambda.zip"           # our zip file
+  handler          = "index.handler"
+  runtime          = "nodejs20.x"
+  timeout          = 30
+  memory_size      = 512
+  source_code_hash = filebase64sha256("lambda.zip")
 
   environment {
     variables = {
@@ -56,9 +55,6 @@ resource "aws_lambda_event_source_mapping" "sqs_trigger" {
   batch_size       = 1
   enabled          = true
 }
-
-
-
 
 
 

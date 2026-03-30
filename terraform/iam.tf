@@ -100,25 +100,6 @@ resource "aws_iam_role_policy" "lambda_cloudwatch_policy" {
 }
 
 
-# 5. ECR Permission → Lambda can pull Docker image
-resource "aws_iam_role_policy" "lambda_ecr_policy" {
-  name = "lambda-ecr-policy"
-  role = aws_iam_role.lambda_role.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Effect = "Allow"
-      Action = [
-        "ecr:GetAuthorizationToken",      # get login token for ECR
-        "ecr:BatchGetImage",              # pull the actual image
-        "ecr:GetDownloadUrlForLayer"      # download image layers
-      ]
-      Resource = "*"                      # any ECR repository
-    }]
-  })
-}
-
 # For ECR:
 #   ecr:GetAuthorizationToken is a global action
 #   it does not apply to a specific repository
@@ -361,19 +342,19 @@ resource "aws_iam_role_policy" "lambda_ecr_policy" {
 
 # Principal — WHO is making the request
 
-Principal = the IDENTITY asking for permission
+# Principal = the IDENTITY asking for permission
 
-Think of it like:
-  "WHO is knocking on the door?"
+#Think of it like:
+#  "WHO is knocking on the door?"
 
-Principal = { Service = "lambda.amazonaws.com" }
-  → AWS Lambda service is knocking
+#Principal = { Service = "lambda.amazonaws.com" }
+#  → AWS Lambda service is knocking
 
-Principal = { Service = "s3.amazonaws.com" }
-  → AWS S3 service is knocking
+#Principal = { Service = "s3.amazonaws.com" }
+#  → AWS S3 service is knocking
 
-Principal = { AWS = "arn:aws:iam::123456789:user/john" }
-  → a specific AWS user named john is knocking
+#Principal = { AWS = "arn:aws:iam::123456789:user/john" }
+#  → a specific AWS user named john is knocking
 
 
 
@@ -460,19 +441,19 @@ Principal = { AWS = "arn:aws:iam::123456789:user/john" }
 
 # Resource — What is this policy about?
 
-Resource = the specific AWS resource the policy applies to
+#Resource = the specific AWS resource the policy applies to
 
-Think of it like:
-  "WHICH door is this policy for?"
+#Think of it like:
+#  "WHICH door is this policy for?"
 
-Resource = aws_sqs_queue.image_queue.arn
-  → This policy is for the image_queue
+#Resource = aws_sqs_queue.image_queue.arn
+#  → This policy is for the image_queue
 
-Resource = aws_s3_bucket.input_bucket.arn
-  → This policy is for the input_bucket
+#Resource = aws_s3_bucket.input_bucket.arn
+#  → This policy is for the input_bucket
 
-Resource = aws_lambda_function.image_resizer.arn
-  → This policy is for the image_resizer Lambda function
+#Resource = aws_lambda_function.image_resizer.arn
+#  → This policy is for the image_resizer Lambda function
 
 
 

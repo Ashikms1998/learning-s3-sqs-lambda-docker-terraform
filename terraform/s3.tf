@@ -8,7 +8,8 @@
 
 # 1. Input bucket (user uploads here)
 resource "aws_s3_bucket" "input_bucket" {
-  bucket = var.input_bucket_name
+  bucket = var.input_bucket
+
 
   tags = {
     Name        = "image-input-bucket"

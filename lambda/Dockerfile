@@ -12,7 +12,7 @@
 # Step 1: Start FROM AWS's official Lambda Node.js image
 # This is Amazon Linux with Node.js 20 already installed
 # Same OS that real AWS Lambda runs on ✅
-FROM public.ecr.aws/lambda/nodejs20.x
+FROM public.ecr.aws/lambda/nodejs:20
 
 # Step 2: Copy package.json first (before index.js)
 # Why first? Docker caches each step
@@ -27,12 +27,12 @@ RUN npm install
 # Step 4: Copy Lambda function code
 COPY index.js .
 
-# Step 5: Tell Lambda which function to run
-# "index" = index.js
-# "handler" = exports.handler
+# Zip everything into lambda.zip
+# This is what Terraform will upload to Lambda
 
 
-CMD ["index.handler"]
+RUN dnf install -y zip && \
+    zip -r /lambda.zip index.js node_modules/
 
 
 ### Why the order of steps matters (Docker caching):
@@ -56,7 +56,7 @@ CMD ["index.handler"]
   
 # Much faster rebuild ✅
 
-### What `public.ecr.aws/lambda/nodejs20.x` gives you:
+### What `public.ecr.aws/lambda/nodejs:20` gives you:
 
 # This base image already has:
 #   ✅ Amazon Linux OS (same as real Lambda)
@@ -71,7 +71,7 @@ CMD ["index.handler"]
 
 ### Visual of what Docker builds:
 
-# public.ecr.aws/lambda/nodejs20.x  ← base layer
+# public.ecr.aws/lambda/nodejs:20   ← base layer
 #         +
 # package.json copied in            ← layer 2
 #         +
