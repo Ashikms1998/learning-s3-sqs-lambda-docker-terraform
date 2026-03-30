@@ -7,7 +7,7 @@
 # 1. Dead Letter Queue (created first)
 
 resource "aws_sqs_queue" "image_dlq" {
-  name                      = "image-resizer-dlq"
+  name                      = var.sqs_dlq_image_resizer
   message_retention_seconds = 1209600   # 14 days
 }
 

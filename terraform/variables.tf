@@ -8,17 +8,17 @@ variable "environment" {
   default     = "dev"
 }
 
-variable "input_bucket_name" {
+variable "input_bucket" {
   description = "S3 bucket where users upload images"
   default     = "image-input-bucket"
 }
 
-variable "output_bucket_name" {
+variable "output_bucket" {
   description = "S3 bucket where resized images are saved"
   default     = "image-output-bucket"
 }
 
-variable "lambda_function_name" {
+variable "image_resizer_lambda" {
   description = "Name of the Lambda function"
   default     = "image-resizer"
 }
@@ -33,12 +33,12 @@ variable "lambda_timeout" {
   default     = 30
 }
 
-variable "sqs_queue_name" {
+variable "sqs_queue_image_resizer" {
   description = "Main SQS queue name"
   default     = "image-resizer-queue"
 }
 
-variable "sqs_dlq_name" {
+variable "sqs_dlq_image_resizer" {
   description = "Dead letter queue name"
   default     = "image-resizer-dlq"
 }

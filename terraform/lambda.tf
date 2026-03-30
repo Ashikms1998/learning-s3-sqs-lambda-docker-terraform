@@ -34,12 +34,12 @@ resource "aws_ecr_repository" "image_resizer" {
 
 # 2. Lambda Function (using Docker image instead of zip)
 resource "aws_lambda_function" "image_resizer" {
-  function_name = "image-resizer"
+  function_name = var.image_resizer_lambda
   role          = aws_iam_role.lambda_role.arn
   package_type  = "Image"                              # Docker image not zip
   image_uri     = "${aws_ecr_repository.image_resizer.repository_url}:latest"
-  timeout       = 30
-  memory_size   = 512                                  # more memory for image processing
+  timeout       = var.lambda_timeout
+  memory_size   = var.lambda_memory                                  # more memory for image processing
 
   environment {
     variables = {
