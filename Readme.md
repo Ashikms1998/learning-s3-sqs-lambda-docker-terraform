@@ -313,15 +313,9 @@ terraform plan
 terraform apply -auto-approve
 
 
-
 Test upload:
 
 awslocal s3 cp E:\path\to\any-image.jpg s3://image-input-bucket/
-
-
-
-
-
 
 
 
@@ -331,3 +325,33 @@ docker build     → builds image with Linux Sharp binaries
 docker run       → starts container
 cp /lambda.zip   → copies zip from container
 /output          → into your terraform folder
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  

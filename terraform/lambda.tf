@@ -29,6 +29,7 @@
 
 
 # 2. Lambda Function (using Docker image instead of zip)
+
 resource "aws_lambda_function" "image_resizer" {
   function_name    = "image-resizer"
   role             = aws_iam_role.lambda_role.arn

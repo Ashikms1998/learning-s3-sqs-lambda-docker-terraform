@@ -99,6 +99,50 @@ resource "aws_iam_role_policy" "lambda_cloudwatch_policy" {
   })
 }
 
+# 5. SSM + Secrets Manager Permission
+resource "aws_iam_role_policy" "lambda_secrets_policy" {
+  name = "lambda-secrets-policy"
+  role = aws_iam_role.lambda_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ssm:GetParameter",
+          "ssm:GetParameters"
+        ]
+        Resource = "arn:aws:ssm:us-east-1:*:parameter/image-resizer/*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "secretsmanager:GetSecretValue"
+        ]
+        Resource = "arn:aws:secretsmanager:us-east-1:*:secret:/image-resizer/*"
+      }
+    ]
+  })
+}
+
+
+### Why scoped to `/image-resizer/*`:
+
+# Resource = "arn:aws:ssm:us-east-1:*:parameter/image-resizer/*"
+
+# This means:
+#   Lambda can ONLY read parameters
+#   that start with /image-resizer/
+
+#   ✅ /image-resizer/output-bucket  → allowed
+#   ✅ /image-resizer/environment    → allowed
+#   ❌ /other-app/secret             → blocked
+
+# Least privilege ✅
+# Lambda cannot read secrets from other apps
+
+
 
 # For ECR:
 #   ecr:GetAuthorizationToken is a global action
@@ -540,3 +584,21 @@ resource "aws_iam_role_policy" "lambda_cloudwatch_policy" {
 #   TO WHAT? → Resource = output-bucket/*
 #   ALLOWED? → Effect = Allow
 # }
+
+
+
+## Summary of both:
+
+# SSM Parameter Store:
+#  ✅ stores config values
+#  ✅ cheap
+#  ✅ simple key-value
+#  ✅ good for non sensitive data
+#  ❌ no auto rotation
+
+# Secrets Manager:
+#  ✅ stores sensitive secrets
+#  ✅ auto rotation
+#  ✅ encrypted vault
+#  ✅ audit trail (who accessed what when)
+#  ❌ slightly more expensive

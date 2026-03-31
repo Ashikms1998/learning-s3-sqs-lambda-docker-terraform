@@ -8,18 +8,25 @@
 
 
 const { S3Client, GetObjectCommand, PutObjectCommand } = require("@aws-sdk/client-s3");
+const { SSMClient, GetParameterCommand } = require("@aws-sdk/client-ssm");
+const { SecretsManagerClient, GetSecretValueCommand } = require("@aws-sdk/client-secrets-manager");
 const sharp = require("sharp");
 
-// Connect to LocalStack S3 (not real AWS)
-const s3 = new S3Client({
+// Shared config for all LocalStack clients
+const localstackConfig = {
   region: "us-east-1",
-  endpoint: process.env.S3_ENDPOINT || "http://host.docker.internal:4566",  // LocalStack URL from inside Docker
+  endpoint: process.env.S3_ENDPOINT || "http://host.docker.internal:4566",
   forcePathStyle: true,                           // required for LocalStack
   credentials: {
     accessKeyId: "test",                          // LocalStack accepts any credentials
     secretAccessKey: "test"
   }
-});
+};
+
+//Clients
+const s3             = new S3Client(localstackConfig);
+const ssm            = new SSMClient(localstackConfig);
+const secretsManager = new SecretsManagerClient(localstackConfig);
 
 // The 3 sizes we will create
 const SIZES = [
@@ -28,9 +35,35 @@ const SIZES = [
   { name: "large",  width: 1280, height: 1280 }
 ];
 
+// Helper: read from SSM
+async function getParameter(name) {
+  const response = await ssm.send(new GetParameterCommand({ Name: name }));
+  return response.Parameter.Value;
+}
+
+// Helper: read from Secrets Manager
+async function getSecret(name) {
+  const response = await secretsManager.send(new GetSecretValueCommand({ SecretId: name }));
+  return JSON.parse(response.SecretString);
+}
+
 exports.handler = async (event) => {
   console.log("Lambda triggered!");
   console.log("Event:", JSON.stringify(event, null, 2));
+
+  // Read config from SSM
+  const outputBucket  = await getParameter("/image-resizer/output-bucket");
+  const environment   = await getParameter("/image-resizer/environment");
+
+  console.log(`Environment: ${environment}`);
+  console.log(`Output bucket: ${outputBucket}`);
+
+  // Read credentials from Secrets Manager (demonstrates fetching secrets)
+  const credentials = await getSecret("/image-resizer/aws-credentials");
+  console.log(`Using accessKeyId: ${credentials.accessKeyId}`);
+  // In a real project you would use these credentials to talk to
+  // an external API, database, or third-party service
+
 
   for (const sqsRecord of event.Records) {
 
@@ -67,7 +100,6 @@ exports.handler = async (event) => {
       console.log(`Downloaded ${fileName} (${imageBuffer.length} bytes)`);
 
       // Step 4: Resize into 3 versions and upload each
-      const outputBucket = process.env.OUTPUT_BUCKET;
 
       for (const size of SIZES) {
         console.log(`Resizing to ${size.name} (${size.width}x${size.height})`);

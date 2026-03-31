@@ -23,6 +23,8 @@ endpoints {
     lambda = "http://localhost:4566"
     iam = "http://localhost:4566"
     ecr = "http://localhost:4566" # for Docker image storage
+    ssm = "http://localhost:4566"
+    secretsmanager = "http://localhost:4566"
 
     }
 }
